@@ -2,7 +2,6 @@ package refreshToken
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -16,13 +15,13 @@ type TokenResponse struct {
 	Scope       string `json:"scope"`
 }
 
-func RefreshToken() error {
+func RefreshToken() (string, error) {
 	data := url.Values{}
 	data.Set("grant_type", "client_credentials")
 
 	request, err := http.NewRequest("POST", "https://accounts.spotify.com/api/token", strings.NewReader(data.Encode()))
 	if err != nil {
-		return err
+		return "", err
 	}
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("Accept", "application/json")
@@ -31,21 +30,20 @@ func RefreshToken() error {
 	client := http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer response.Body.Close()
 
 	bodyBytes, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	tokenResponse := TokenResponse{}
 	err = json.Unmarshal(bodyBytes, &tokenResponse)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	fmt.Print(tokenResponse.AccessToken)
-	return nil
+	return tokenResponse.AccessToken, nil
 }
